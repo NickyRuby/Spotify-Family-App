@@ -6,7 +6,7 @@ const cliendId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689'; 
 const app = express();
 const PORT = process.env.PORT || 4001;
-let accessToken = 'BQBLpIHjxq4Fl3phOnXWv1IkwbY_vNPHuGmRGYHS8yTfdm5Vkhz873Drpgu7e_tF8_LosnMUyfMw53Oxfa7mHSMwPAlIbRyf7ZVynom2oWxiLGB6txKdur_K6S8Su91Z3ytrauAGhtO-lWaoyoRlAHSZSllYNgATwrg';   
+let accessToken = 'BQBaUWZZ2BU132GO1J_j7-se5fBlPIE7JFdZ9EXvDdLXfJu7QUW53sE1Xs7pRiZGUpBSNzzkag7GPGhiApPDDVwZZv49ag9taeKMd3B0giWgguBuGhwAi6AyF2WntgVvMXVSPuFcMkPcwxofzjOW-aI3CeO77Cxq42s';   
 
 app.listen(PORT);
 
@@ -49,17 +49,21 @@ const hello = () => {
     console.log('hello');
 }
 
-// const getAuth = async () => {
-//     try {
-//     let requestUrl = `https://accounts.spotify.com/authorize?client_id=${cliendId}&response_type=token&redirect_uri=https%3A%2F%2Flocalhost:4001%2Fcallback/`
-//     const response = await fetch(requestUrl);   
-//     return await response.json();
-//     }
-//     catch(err) {
-//         console.log(err.message);
-//     }
-// }
+// response -> [{artist, track, link}]
+function getPlaylistTracks(response) {
+    let tracks =[];
+    response.items.forEach(item => {
+            tracks.push({
+            artist: item.track.artists[0].name,
+            track: item.track.name,
+            link: item.track.external_urls.spotify,
+            })         
+        });
+    console.log(tracks);
+}
 
-// let authCode = getAuth();
+
 hello();
-getTracks().then(response => console.log(response)).catch(err => console.log(err));
+getTracks()
+.then(response => getPlaylistTracks(response))
+.catch(err => console.log(err));
