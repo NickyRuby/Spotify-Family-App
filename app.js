@@ -1,4 +1,3 @@
-
 const fetch = require('node-fetch');
 const express = require("express");
 const robert = require('./bot.js');
@@ -7,7 +6,8 @@ const cliendId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689'; 
 const app = express();
 const PORT = process.env.PORT || 4001;
-let accessToken = 'BQDrnIBO99P8NaYxcFUiekDyOgXIE4LeQ8-SgItY-fUBEtIDZzcQ5i8vMJAZg-4zzN4FdH1cRlrWw6Nj7EMafeYiYbEKHsMcuM65oG1191RYQLgBtf0HvgcrjzRvFLVzNHlUuIUbkdLkHL8fl6cOVjfkkWqi_TECe_c';   
+let accessToken = 'BQDotqQk7SrmYkduIMKIC05olG3rZmaU4R6CLrUn7blNuA6xBXTILDx90wU3OfVCY9uM3pKlDhIepvFCC_Mw0mgS73WmDfGLGjnADDSZLCvQSEJGNOAKCCxMNKKuZGe-4-PAr6mJbzfvt6phseXT_wnKOlkhI0yKFYs';   
+let playlistState = require('./playlists_states.js');
 
 app.listen(PORT);
 
@@ -19,9 +19,6 @@ app.get('/auth', (req,res,next) => {
     res.redirect(`https://accounts.spotify.com/authorize?client_id=${cliendId}&response_type=token&redirect_uri=https%3A%2F%2Flocalhost:4001%2Fcallback/`);
 });
 
-app.get('/give', (req,res,next) => {
-
-});
 
 app.get('/tracks', (req,res,next) => {
     let tracks =[];
@@ -38,10 +35,6 @@ app.get('/tracks', (req,res,next) => {
     console.log(tracks);
     res.send(tracks);
 })
-
-app.get('/login', function(req, res) {
-
-    });
 
 
 app.get('/callback/:params', (req,res,next) => {
@@ -61,10 +54,6 @@ const response = await fetch(url,
 return await response.json();
 }
 
-const hello = () => {
-    console.log('hello');
-}
-
 // response -> [{artist, track, link}]
 function getPlaylistTracks(response) {
     let tracks =[];
@@ -79,12 +68,31 @@ function getPlaylistTracks(response) {
     return tracks;
 }
 
+function comparePlaylist(playlistState, receivedState) {
+    const diff =  receivedState.length - playlistState.tracks.length;
+        if (diff >= 1) {
+            const newTrack = receivedState[receivedState.length - 1];
+            playlistState.tracks.push(newTrack);
+            let message = "🎶 " +  newTrack.artist + " — " + newTrack.track + "\n\n" + "⏯ " + `[Слушать](${newTrack.link})` + "\n";
+            robert.sendMessage(119821330, message, { parse_mode: "markdown"});
+        }
+        else return null;
+}
 
-hello();
+
+// getTracks()
+// .then(response => {
+//     let tracksList = getPlaylistTracks(response);
+//     let message = "🎶 " +  tracksList[3].artist + " — " + tracksList[3].track + "\n\n" + "⏯ " + `[Слушать](${tracksList[3].link})` + "\n";
+//     robert.sendMessage(119821330, message, { parse_mode: "markdown"});
+//     })
+// .catch(err => console.log(err));
+
+console.log(playlistState);
 getTracks()
 .then(response => {
     let tracksList = getPlaylistTracks(response);
-    message = "🎶 " +  tracksList[3].artist + " — " + tracksList[3].track + "\n\n" + "⏯ " + `[Слушать](${tracksList[3].link})`;
-    robert.sendMessage(119821330, message, { parse_mode: "markdown"});
+    comparePlaylist(playlistState,tracksList); 
+    console.log(playlistState);
     })
 .catch(err => console.log(err));
