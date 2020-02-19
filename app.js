@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const fs = require('fs');
 const express = require("express");
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
@@ -6,8 +7,12 @@ const cliendId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689'; 
 const app = express();
 const PORT = process.env.PORT || 4001;
-let accessToken = 'BQDotqQk7SrmYkduIMKIC05olG3rZmaU4R6CLrUn7blNuA6xBXTILDx90wU3OfVCY9uM3pKlDhIepvFCC_Mw0mgS73WmDfGLGjnADDSZLCvQSEJGNOAKCCxMNKKuZGe-4-PAr6mJbzfvt6phseXT_wnKOlkhI0yKFYs';   
+let accessToken = 'BQDGAnskbW4Pbu8KGz-HbdSwZy30NZCPjg_lqk6LljBk6NBA0QcefKgmvkBGfTiF7H_voW0C_s96s86aeOvQ0WL9HrmXaZReHLO55lT772va8h8TwwxTgGquESmcP-e-N9kEcoknRNU72ZNFg_5rzyMDdmRbYd93x4I';   
 let playlistState = require('./playlists_states.js');
+
+
+
+
 
 app.listen(PORT);
 
@@ -20,29 +25,8 @@ app.get('/auth', (req,res,next) => {
 });
 
 
-app.get('/tracks', (req,res,next) => {
-    let tracks =[];
-    getTracks()
-.then(response => getPlaylistTracks(response))
-.catch(err => console.log(err));
-    response.items.forEach(item => {
-            tracks.push({
-            artist: item.track.artists[0].name,
-            track: item.track.name,
-            link: item.track.external_urls.spotify,
-            })         
-        });
-    console.log(tracks);
-    res.send(tracks);
-})
-
-
-app.get('/callback/:params', (req,res,next) => {
-    res.send(req.params);
-})
-
-
 const getTracks = async () => {
+    try {
 const response = await fetch(url,
     {
         headers: {
@@ -52,6 +36,10 @@ const response = await fetch(url,
         }
     });
 return await response.json();
+    }
+    catch(err) {
+        console.log(err);
+    }
 }
 
 // response -> [{artist, track, link}]
@@ -62,9 +50,15 @@ function getPlaylistTracks(response) {
             artist: item.track.artists[0].name,
             track: item.track.name,
             link: item.track.external_urls.spotify,
-            })         
+            });
+            fs.appendFileSync('./tracks.txt', `${item.track.external_urls.spotify}\n`, (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+            console.log(item.track.external_urls.spotify)   
         });
-    console.log(tracks);
+    //console.log(tracks);
     return tracks;
 }
 
@@ -75,6 +69,11 @@ function comparePlaylist(playlistState, receivedState) {
             playlistState.tracks.push(newTrack);
             let message = "🎶 " +  newTrack.artist + " — " + newTrack.track + "\n\n" + "⏯ " + `[Слушать](${newTrack.link})` + "\n";
             robert.sendMessage(119821330, message, { parse_mode: "markdown"});
+            fs.appendFileSync('./tracks.txt', `${newTrack.link}\n`, (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
         }
         else return null;
 }
