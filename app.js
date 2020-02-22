@@ -7,7 +7,7 @@ const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks'
 const cliendId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const app = express();
 const PORT = process.env.PORT || 4001;
-let accessToken = 'BQAVMSr_yv_hu4FubWBXnmd4JtJaXsvscB08ieGXl8xTyzK32Cpc-iVQeFNMAMj4_bH4VcMxFRV1CuQkdN7cK7hxaRZ2VRzp4xKXS8-5vyIftdtZpSbk0l_rkc81DN9ZqSq1_qfzcVBuRAidv8qPyp9GMnPgiffRQl8';   
+let accessToken = 'BQBVQDz8oHvlrAOQ9sJD2SN2wkrCD43Pv4zCZwYCfkM8FmFoebRuLZ9KiJzvmQqcIt3BCrIhh-K7jnN0ZEUKEbiIBX5zLte5UmsFbFAo7AG4tZy_j1wAsMQhzvyoOv91rlsq9TKzOSGHK7X3Us_l9sl8sZ69gpYXPow';   
 
 
 app.listen(PORT);
@@ -46,7 +46,9 @@ function getPlaylistTracks(response) {
             artist: item.track.artists[0].name,
             track: item.track.name,
             link: item.track.external_urls.spotify,
+            //cover: item.track.images[0].url + "?640x640",
             });
+            console.log(item.track.images);
         });
     return tracks;
 }
@@ -54,8 +56,8 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     console.log(tracks);
     tracks.forEach(track => {
-    let message = "🎶 " +  track.artist + " — " + track.track + "\n\n" + "⏯ " + `[Слушать](${track.link})` + "\n";
-            robert.sendMessage(119821330, message, { parse_mode: "markdown"});
+    let message = "🎶 " +  track.artist + " — " + track.track + "\n";
+            robert.sendMessage(119821330, message, { reply_markup: {inline_keyboard: [[{text: "Cлушать", url: track.link}]]}});
             fs.appendFileSync('./tracks.txt', `\n${track.link}`, (err) => {
                 if (err) {
                     console.log(err);
@@ -92,9 +94,12 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 }
 
 
-
+function search() {
 getTracks()
 .then(response => {
     let tracksList = getPlaylistTracks(response);
     comparePlaylist(tracksList); 
     }).catch(err => console.log(err));
+}
+
+setInterval(search, 1000);
