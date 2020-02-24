@@ -1,13 +1,13 @@
 const fetch = require('node-fetch');
 const fs = require('fs');
-const readline = require('readline');
 const express = require("express");
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
-const cliendId = '277eaca42cad4bef8826cf7bac7e9c4d';
+const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
+const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689';
 const app = express();
 const PORT = process.env.PORT || 4001;
-let accessToken = 'BQBVQDz8oHvlrAOQ9sJD2SN2wkrCD43Pv4zCZwYCfkM8FmFoebRuLZ9KiJzvmQqcIt3BCrIhh-K7jnN0ZEUKEbiIBX5zLte5UmsFbFAo7AG4tZy_j1wAsMQhzvyoOv91rlsq9TKzOSGHK7X3Us_l9sl8sZ69gpYXPow';   
+let accessToken = 'BQD05KF90rclkyEsd7TnoalXPBGQ8Lr6t-g6Eoma41_d3S26cEt3eRirLIAlDihUDvuXy6vJYNz8BKQIk-Hc525BL1tbgHEHkXlY3ssLUy6WWuuehx27s5lQ9nTF7Z2j0sYYEOmC7bgLXj2U88Zn3fCW3y2ODMDU1MU';   
 
 
 app.listen(PORT);
@@ -20,18 +20,46 @@ app.get('/auth', (req,res,next) => {
     res.redirect(`https://accounts.spotify.com/authorize?client_id=${cliendId}&response_type=token&redirect_uri=https%3A%2F%2Flocalhost:4001%2Fcallback/`);
 });
 
+async function auth() {
+    try {
+            var encodedData = Buffer.from(clientId + ':' + clientSecret).toString('base64');
+            var authorizationHeaderString = 'Authorization: Basic ' + encodedData;
+            console.log(encodedData);
+            console.log(authorizationHeaderString);
+
+            await fetch('https://accounts.spotify.com/api/token', {
+                body: "grant_type=client_credentials",
+                header: {
+                  authorizationHeaderString,
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                method: "POST"
+            }).then(response => {
+                //console.log(response);
+                let newToken =response.accessToken;
+                accessToken = newToken;
+                //https://accounts.spotify.com/api/token?clientId=
+            });
+            
+    }
+    catch (err) {
+        console.log(err)
+    }
+};
+
+
 
 const getTracks = async () => {
     try {
-const response = await fetch(url,
-    {
-        headers: {
-          'Authorization': 'Bearer ' + accessToken,
-          'Content-Type': 'application/json'
-          
-        }
-    });
-return await response.json();
+        const response = await fetch(url,
+        {
+            headers: {
+            'Authorization': 'Bearer ' + accessToken,
+            'Content-Type': 'application/json'
+            
+            },
+        });
+        return await response.json();
     }
     catch(err) {
         console.log(err);
@@ -42,6 +70,7 @@ return await response.json();
 function getPlaylistTracks(response) {
     let tracks =[];
     response.items.forEach(item => {
+            console.log(item.track.images       );
             tracks.push({
             artist: item.track.artists[0].name,
             track: item.track.name,
@@ -66,8 +95,6 @@ function sendTracksToChat(tracks) { // {[]}
      });
 }
 
-
-// TODO: Resolve chacking logic 
 
 function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
     
@@ -94,12 +121,25 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 }
 
 
-function search() {
-getTracks()
-.then(response => {
-    let tracksList = getPlaylistTracks(response);
-    comparePlaylist(tracksList); 
-    }).catch(err => console.log(err));
+// function search() {
+// getTracks()
+// .then(response => {
+//     let tracksList = getPlaylistTracks(response);
+//     comparePlaylist(tracksList); 
+//     }).catch(err => {
+//         console.log(err)
+//         if (err.message === 'The access token expired') {
+//             auth();
+//             search();
+//         }
+//     });
+// }
+
+// setInterval(search, 1000);
+
+
+function test() {
+auth();
 }
 
-setInterval(search, 1000);
+test();
