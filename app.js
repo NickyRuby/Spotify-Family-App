@@ -1,52 +1,42 @@
 const fetch = require('node-fetch');
+const rp = require('request-promise');
 const fs = require('fs');
-const express = require("express");
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
 const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689';
-const app = express();
-const PORT = process.env.PORT || 4001;
 let accessToken = 'BQD05KF90rclkyEsd7TnoalXPBGQ8Lr6t-g6Eoma41_d3S26cEt3eRirLIAlDihUDvuXy6vJYNz8BKQIk-Hc525BL1tbgHEHkXlY3ssLUy6WWuuehx27s5lQ9nTF7Z2j0sYYEOmC7bgLXj2U88Zn3fCW3y2ODMDU1MU';   
+const TOKEN_URI = "https://accounts.spotify.com/api/token";
+let tokenExpires;
+let tokenExpired = true;
 
 
-app.listen(PORT);
-
-app.get('/', (req,res,next) => {
-    res.send('hello there');
-})
-
-app.get('/auth', (req,res,next) => {
-    res.redirect(`https://accounts.spotify.com/authorize?client_id=${cliendId}&response_type=token&redirect_uri=https%3A%2F%2Flocalhost:4001%2Fcallback/`);
-});
 
 async function auth() {
-    try {
-            var encodedData = Buffer.from(clientId + ':' + clientSecret).toString('base64');
-            var authorizationHeaderString = 'Authorization: Basic ' + encodedData;
-            console.log(encodedData);
-            console.log(authorizationHeaderString);
-
-            await fetch('https://accounts.spotify.com/api/token', {
-                body: "grant_type=client_credentials",
-                header: {
-                  authorizationHeaderString,
-                  "Content-Type": "application/x-www-form-urlencoded"
-                },
-                method: "POST"
-            }).then(response => {
-                //console.log(response);
-                let newToken =response.accessToken;
-                accessToken = newToken;
-                //https://accounts.spotify.com/api/token?clientId=
-            });
-            
-    }
-    catch (err) {
-        console.log(err)
-    }
+    const opts = {
+        method: 'POST',
+        uri: TOKEN_URI,
+        form: {grant_type: "client_credentials"},
+        headers: {
+            Authorization:"Basic " + Buffer.from(clientId + ":" + clientSecret, "ascii").toString("base64"),
+        },
+        json: true,
+    
+    };
+    
+    rp(opts).then((token) => {
+        tokenExpires = Date().now / 1000 + 3200;
+        console.log(token);
+        accessToken = token.access_token;
+        console.log(accessToken);
+        tokenExpired = false;
+    });
 };
 
+function isTokenExpired(){
+    const currentTime = Date().now / 1000 ;
+    if (currentTime >= tokenExpires || tokenExpired) auth();
+}
 
 
 const getTracks = async () => {
@@ -70,7 +60,7 @@ const getTracks = async () => {
 function getPlaylistTracks(response) {
     let tracks =[];
     response.items.forEach(item => {
-            console.log(item.track.images       );
+            console.log(item.track.images);
             tracks.push({
             artist: item.track.artists[0].name,
             track: item.track.name,
@@ -83,15 +73,14 @@ function getPlaylistTracks(response) {
 }
 
 function sendTracksToChat(tracks) { // {[]}
-    console.log(tracks);
     tracks.forEach(track => {
     let message = "🎶 " +  track.artist + " — " + track.track + "\n";
-            robert.sendMessage(119821330, message, { reply_markup: {inline_keyboard: [[{text: "Cлушать", url: track.link}]]}});
-            fs.appendFileSync('./tracks.txt', `\n${track.link}`, (err) => {
-                if (err) {
-                    console.log(err);
-                }
-            });
+    robert.sendMessage(119821330, message, { reply_markup: {inline_keyboard: [[{text: "Cлушать", url: track.link}]]}});
+    fs.appendFileSync('./tracks.txt', `\n${track.link}`, (err) => {
+        if (err) {
+            console.log(err);
+        }
+        });
      });
 }
 
@@ -121,25 +110,16 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 }
 
 
-// function search() {
-// getTracks()
-// .then(response => {
-//     let tracksList = getPlaylistTracks(response);
-//     comparePlaylist(tracksList); 
-//     }).catch(err => {
-//         console.log(err)
-//         if (err.message === 'The access token expired') {
-//             auth();
-//             search();
-//         }
-//     });
-// }
-
-// setInterval(search, 1000);
-
-
-function test() {
-auth();
+function search() {
+    isTokenExpired();
+    getTracks()
+        .then(response => {
+        let tracksList = getPlaylistTracks(response);
+        comparePlaylist(tracksList); 
+        }).catch(err => {
+        console.log(err)
+    });
 }
 
-test();
+
+setInterval(search, 1000);
