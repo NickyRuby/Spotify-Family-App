@@ -5,10 +5,8 @@ const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
 const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689';
-let accessToken = 'BQD05KF90rclkyEsd7TnoalXPBGQ8Lr6t-g6Eoma41_d3S26cEt3eRirLIAlDihUDvuXy6vJYNz8BKQIk-Hc525BL1tbgHEHkXlY3ssLUy6WWuuehx27s5lQ9nTF7Z2j0sYYEOmC7bgLXj2U88Zn3fCW3y2ODMDU1MU';   
-const TOKEN_URI = "https://accounts.spotify.com/api/token";
-let tokenExpires;
-let tokenExpired = true;
+let accessToken, tokenExpires, tokenExpired = true;
+ TOKEN_URI = "https://accounts.spotify.com/api/token";
 
 
 
@@ -26,11 +24,9 @@ async function auth() {
     
     rp(opts).then((token) => {
         tokenExpires = Date().now / 1000 + 3200;
-        console.log(token);
         accessToken = token.access_token;
-        console.log(accessToken);
         tokenExpired = false;
-    });
+    }); 
 };
 
 function isTokenExpired(){
@@ -75,7 +71,10 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message = "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendMessage(119821330, message, { reply_markup: {inline_keyboard: [[{text: "Cлушать", url: track.link}]]}});
+    robert.sendMessage(119821330, message, 
+        { reply_markup: 
+            {inline_keyboard: [[{text: "Cлушать", url: track.link}]]}
+        });
     fs.appendFileSync('./tracks.txt', `\n${track.link}`, (err) => {
         if (err) {
             console.log(err);
@@ -87,7 +86,6 @@ function sendTracksToChat(tracks) { // {[]}
 
 function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
     
-    console.log(receivedState);
     const results = [];
 
     const tracks = fs.readFileSync('./tracks.txt', 'utf8', (err,data) => {
@@ -103,7 +101,6 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
         else return false;
         });
 
-    console.log(results);
     if (results.length > 0) sendTracksToChat(results);
     else console.log('Nothing new');
     
@@ -116,7 +113,8 @@ function search() {
         .then(response => {
         let tracksList = getPlaylistTracks(response);
         comparePlaylist(tracksList); 
-        }).catch(err => {
+        })
+        .catch(err => {
         console.log(err)
     });
 }
