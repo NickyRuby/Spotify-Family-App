@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express')
 const bodyParser = require('body-parser');
+require('dotenv').config()
 const token = process.env.TELEGRAM_TOKEN;
  
 const app = express();
@@ -8,7 +9,6 @@ const app = express();
 app.use(bodyParser.json());
  
 app.listen(process.env.PORT);
- 
 app.post('/' + token, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
@@ -17,7 +17,7 @@ app.post('/' + token, (req, res) => {
 
 if (process.env.NODE_ENV === 'production') {
     robertBot = new TelegramBot(token);
-    robertBot.setWebHook(process.env.HEROKU_URL + hetoken);
+    robertBot.setWebHook(process.env.HEROKU_URL + token);
  } else {
     robertBot = new TelegramBot(token, { polling: true });
  }

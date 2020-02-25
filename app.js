@@ -1,11 +1,13 @@
 const fetch = require('node-fetch');
 const rp = require('request-promise');
 const fs = require('fs');
+require('dotenv').config()
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
 const clientId = process.env.CLIENT_ID;
 const clientSecret =  process.env.CLIENT_SECRET;
 let accessToken, tokenExpires, tokenExpired = true;
+
  TOKEN_URI = "https://accounts.spotify.com/api/token";
 
 
