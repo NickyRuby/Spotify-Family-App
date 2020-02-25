@@ -17,7 +17,7 @@ app.post('/' + token, (req, res) => {
 
 if (process.env.NODE_ENV === 'production') {
     robertBot = new TelegramBot(token);
-    robertBot.setWebHook(process.env.HEROKU_URL + bot.token);
+    robertBot.setWebHook(process.env.HEROKU_URL + hetoken);
  } else {
     robertBot = new TelegramBot(token, { polling: true });
  }
