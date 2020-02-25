@@ -3,8 +3,8 @@ const rp = require('request-promise');
 const fs = require('fs');
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
-const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
-const clientSecret = '65adb2bc8d794d0e8c58741e5c5b6689';
+const clientId = process.env.CLIENT_ID;
+const clientSecret =  process.env.CLIENT_SECRET;
 let accessToken, tokenExpires, tokenExpired = true;
  TOKEN_URI = "https://accounts.spotify.com/api/token";
 
