@@ -101,7 +101,7 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
     receivedState.forEach(item => {
         if (!tracks.includes(item.link)) { 
             results.push(item); 
-            console.log('New track added');
+            console.log(`New track added: ${item.artist} — ${item.track}`);
         }
         else return false;
         });
