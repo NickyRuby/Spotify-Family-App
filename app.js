@@ -75,7 +75,7 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(119821330, track.cover, {
+    robert.sendPhoto(-387424773, track.cover, {
         caption: message, 
         reply_markup: 
             {
