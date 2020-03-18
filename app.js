@@ -61,7 +61,7 @@ const getTracks = async () => {
 function getPlaylistTracks(response) {
     let tracks =[];
     response.items.forEach(item => {
-            console.log(item.track.images);
+            // console.log(item.track.images);
             tracks.push({
             artist: item.track.artists[0].name,
             track: item.track.name,
