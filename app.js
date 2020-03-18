@@ -66,19 +66,21 @@ function getPlaylistTracks(response) {
             artist: item.track.artists[0].name,
             track: item.track.name,
             link: item.track.external_urls.spotify,
-            //cover: item.track.images[0].url + "?640x640",
+            cover: item.track.album.images[0].url + `?${item.track.album.images[0].width}x${item.track.album.images[0].width}`,
             });
-            //console.log(item.track.images);
         });
     return tracks;
 }
 
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
-    let message = "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendMessage(119821330, message, 
-        { reply_markup: 
-            {inline_keyboard: [[{text: "Cлушать", url: track.link}]]}
+    let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
+    robert.sendPhoto(119821330, track.cover, {
+        caption: message, 
+        reply_markup: 
+            {
+                inline_keyboard: [[{text: "Cлушать", url: track.link}]]
+            }
         });
     fs.appendFileSync('./tracks.txt', `\n${track.link}`, (err) => {
         if (err) {
@@ -129,3 +131,4 @@ function search() {
 }
 
 setInterval(search, 1000);
+
