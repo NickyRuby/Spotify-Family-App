@@ -1,11 +1,14 @@
 const fetch = require('node-fetch');
 const rp = require('request-promise');
 const fs = require('fs');
-require('dotenv').config()
+require('dotenv').config();
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
-const clientId = process.env.CLIENT_ID;
-const clientSecret =  process.env.CLIENT_SECRET;
+// const clientId = process.env.CLIENT_ID;
+// const clientSecret =  process.env.CLIENT_SECRET;
+// let accessToken, tokenExpires, tokenExpired = true;
+const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
+const clientSecret =  '65adb2bc8d794d0e8c58741e5c5b6689';
 let accessToken, tokenExpires, tokenExpired = true;
 
  TOKEN_URI = "https://accounts.spotify.com/api/token";
@@ -21,7 +24,6 @@ async function auth() {
             Authorization:"Basic " + Buffer.from(clientId + ":" + clientSecret, "ascii").toString("base64"),
         },
         json: true,
-    
     };
     
     rp(opts).then((token) => {
@@ -34,6 +36,7 @@ async function auth() {
 function isTokenExpired(){
     const currentTime = Date().now / 1000 ;
     if (currentTime >= tokenExpires || tokenExpired) auth();
+
 }
 
 
@@ -65,7 +68,7 @@ function getPlaylistTracks(response) {
             link: item.track.external_urls.spotify,
             //cover: item.track.images[0].url + "?640x640",
             });
-            console.log(item.track.images);
+            //console.log(item.track.images);
         });
     return tracks;
 }
@@ -110,8 +113,10 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 
 
 function search() {
-    isTokenExpired();
-    getTracks()
+    const currentTime = Date().now / 1000 ;
+    if (currentTime >= tokenExpires || tokenExpired) auth();
+    else {
+        getTracks()
         .then(response => {
         let tracksList = getPlaylistTracks(response);
         comparePlaylist(tracksList); 
@@ -119,7 +124,8 @@ function search() {
         .catch(err => {
         console.log(err)
     });
+    }
+   
 }
-
 
 setInterval(search, 1000);
