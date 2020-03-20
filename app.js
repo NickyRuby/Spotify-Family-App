@@ -1,6 +1,8 @@
 const fetch = require('node-fetch');
 const rp = require('request-promise');
 const fs = require('fs');
+const redis = require('redis');
+const client = redis.createClient()
 require('dotenv').config();
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
@@ -82,11 +84,12 @@ function sendTracksToChat(tracks) { // {[]}
                 inline_keyboard: [[{text: "Cлушать", url: track.link}]]
             }
         });
-    fs.appendFileSync('./tracks.txt', `\n${track.link}`, (err) => {
-        if (err) {
-            console.log(err);
-        }
-        });
+
+        client.llen('tracks',(err,rep) => {
+            let newId = rep + 1;
+            client.lpush('tracks', `${newId}`,track.link)
+            });
+
      });
 }
 
@@ -95,22 +98,20 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
     
     const results = [];
 
-    const tracks = fs.readFileSync('./tracks.txt', 'utf8', (err,data) => {
-        if (err) throw err;
-        const links = data.split(/\r?\n/);
-        return links;
-    });
-    receivedState.forEach(item => {
-        if (!tracks.includes(item.link)) { 
-            results.push(item); 
-            console.log(`New track added: ${item.artist} — ${item.track}`);
-        }
-        else return false;
+    client.llen('tracks',(err,rep) => {
+        client.lrange('tracks',0,rep, (err,tracks) => {
+            receivedState.forEach(item => {
+                if (!tracks.includes(item.link)) { 
+                    results.push(item); 
+                    console.log(`New track added: ${item.artist} — ${item.track}`);
+                }
+                else return false;
+                });
+        
+            if (results.length > 0) sendTracksToChat(results);
+            else console.log('Nothing new');
         });
-
-    if (results.length > 0) sendTracksToChat(results);
-    else console.log('Nothing new');
-    
+    });
 }
 
 
