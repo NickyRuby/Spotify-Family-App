@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 const rp = require('request-promise');
 const fs = require('fs');
 const redis = require('redis');
-const client = redis.createClient()
+const client = redis.createClient('redis://h:p8eacdec501aae153f1a0574d2b53a4deb2253772597ca7992245c633dd4c7a34@ec2-3-231-40-15.compute-1.amazonaws.com:19009')
 require('dotenv').config();
 const robert = require('./bot.js');
 const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
