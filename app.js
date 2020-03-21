@@ -71,14 +71,11 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(-1314211776, track.cover, {
+    robert.sendPhoto(-1001314211776, track.cover, {
         caption: message, 
         reply_markup: 
             {
                 inline_keyboard: [[{text: "Cлушать", url: track.link}]],
-                resize_keyboard: true,
-                one_time_keyboard: true,
-		        keyboard: [['🖤'],['💩']],
             }
         });
 
