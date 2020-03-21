@@ -11,7 +11,7 @@ const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks'
 // let accessToken, tokenExpires, tokenExpired = true;
 const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret =  '65adb2bc8d794d0e8c58741e5c5b6689';
-let accessToken, tokenExpires, tokenExpired = true;
+let accessToken, tokenExpires, hasTokenExpired = true;
 
  TOKEN_URI = "https://accounts.spotify.com/api/token";
 
@@ -29,17 +29,11 @@ async function auth() {
     };
     
     rp(opts).then((token) => {
-        tokenExpires = Date().now / 1000 + 3200;
+        tokenExpires = Date.now() / 1000 + 3200;
         accessToken = token.access_token;
-        tokenExpired = false;
+        hasTokenExpired = false;
     }); 
 };
-
-function isTokenExpired(){
-    const currentTime = Date().now / 1000 ;
-    if (currentTime >= tokenExpires || tokenExpired) auth();
-
-}
 
 
 const getTracks = async () => {
@@ -116,8 +110,8 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 
 
 function search() {
-    const currentTime = Date().now / 1000 ;
-    if (currentTime >= tokenExpires || tokenExpired) auth();
+    const currentTime = Date().now / 1000;
+    if (currentTime >= tokenExpires || hasTokenExpired) auth();
     else {
         getTracks()
         .then(response => {
@@ -132,4 +126,3 @@ function search() {
 }
 
 setInterval(search, 1000);
-
