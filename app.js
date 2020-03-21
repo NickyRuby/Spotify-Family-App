@@ -75,7 +75,10 @@ function sendTracksToChat(tracks) { // {[]}
         caption: message, 
         reply_markup: 
             {
-                inline_keyboard: [[{text: "Cлушать", url: track.link}]]
+                inline_keyboard: [[{text: "Cлушать", url: track.link}]],
+                resize_keyboard: true,
+                one_time_keyboard: true,
+		        keyboard: [['🖤'],['💩']];
             }
         });
 
