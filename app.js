@@ -17,7 +17,7 @@ let accessToken, tokenExpires, hasTokenExpired = true;
 
 
 
-async function auth() {
+function auth() {
     const opts = {
         method: 'POST',
         uri: TOKEN_URI,
@@ -27,9 +27,9 @@ async function auth() {
         },
         json: true,
     };
-    
+    console.log('im here');
     rp(opts).then((token) => {
-        tokenExpires = Date.now() / 1000 + 3200;
+        tokenExpires = Date.now() + 1;
         accessToken = token.access_token;
         hasTokenExpired = false;
     }); 
@@ -71,11 +71,15 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(-1001314211776, track.cover, {
+    robert.sendPhoto(119821330, track.cover, {
         caption: message, 
         reply_markup: 
             {
-                inline_keyboard: [[{text: "Cлушать", url: track.link}]],
+                inline_keyboard: [
+                    [{text: "Cлушать", url: track.link}],
+                    [{text: "🖤", callback_data: 0}],
+                    [{text: "🖤", callback_data: 0}],
+                ],
             }
         });
 
@@ -110,8 +114,21 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 
 
 function search() {
-    const currentTime = Date().now / 1000;
-    if (currentTime >= tokenExpires || hasTokenExpired) auth();
+    // debug
+
+    const currentTime = Date().now;
+    console.log(hasTokenExpired);
+    console.log(Date.now());
+    console.log(tokenExpires);
+    console.log(currentTime > tokenExpires);
+    console.log(accessToken);
+
+
+  
+    if (currentTime < tokenExpires || hasTokenExpired) {
+        console.log('im working');
+        auth();
+    }
     else {
         getTracks()
         .then(response => {
@@ -120,6 +137,7 @@ function search() {
         })
         .catch(err => {
         console.log(err)
+    
     });
     }
    
