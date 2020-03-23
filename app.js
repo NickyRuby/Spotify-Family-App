@@ -29,7 +29,7 @@ function auth() {
     };
     console.log('im here');
     rp(opts).then((token) => {
-        tokenExpires = Date.now() + 1;
+        tokenExpires = Date.now() + 3200;
         accessToken = token.access_token;
         hasTokenExpired = false;
     }); 
@@ -76,10 +76,7 @@ function sendTracksToChat(tracks) { // {[]}
         reply_markup: 
             {
                 inline_keyboard: [
-                    [{text: "Cлушать", url: track.link}],
-                    [{text: "🖤", callback_data: 0}],
-                    [{text: "🖤", callback_data: 0}],
-                ],
+                    [{text: "Cлушать", url: track.link}]]
             }
         });
 
@@ -114,18 +111,10 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 
 
 function search() {
-    // debug
 
-    const currentTime = Date().now;
-    console.log(hasTokenExpired);
-    console.log(Date.now());
-    console.log(tokenExpires);
-    console.log(currentTime > tokenExpires);
-    console.log(accessToken);
-
-
+    const currentTime = Date.now();
   
-    if (currentTime < tokenExpires || hasTokenExpired) {
+    if (currentTime > tokenExpires || hasTokenExpired) {
         console.log('im working');
         auth();
     }
@@ -139,8 +128,7 @@ function search() {
         console.log(err)
     
     });
-    }
-   
+}
 }
 
 setInterval(search, 1000);
