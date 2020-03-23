@@ -2,25 +2,17 @@ const fetch = require('node-fetch');
 const rp = require('request-promise');
 const fs = require('fs');
 const redis = require('redis');
-const client = redis.createClient('redis://h:p8eacdec501aae153f1a0574d2b53a4deb2253772597ca7992245c633dd4c7a34@ec2-3-231-40-15.compute-1.amazonaws.com:19009')
-require('dotenv').config();
+const client = redis.createClient(process.env.HEROKU_REDIS_RED_URL)
 const robert = require('./bot.js');
-const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks';
-// const clientId = process.env.CLIENT_ID;
-// const clientSecret =  process.env.CLIENT_SECRET;
-// let accessToken, tokenExpires, tokenExpired = true;
-const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
-const clientSecret =  '65adb2bc8d794d0e8c58741e5c5b6689';
+const url = process.env.PLAYLIST_URL;
+const clientId = process.env.CLIENT_ID;
+const clientSecret =  process.env.CLIENT_SECRET;
 let accessToken, tokenExpires = Date.now() / 1000;
-
- TOKEN_URI = "https://accounts.spotify.com/api/token";
-
-
 
 function auth() {
     const opts = {
         method: 'POST',
-        uri: TOKEN_URI,
+        uri: process.env.TOKEN_URI,
         form: {grant_type: "client_credentials"},
         headers: {
             Authorization:"Basic " + Buffer.from(clientId + ":" + clientSecret, "ascii").toString("base64"),
@@ -37,7 +29,7 @@ function auth() {
 
 const getTracks = async () => {
     try {
-        const response = await fetch(url,
+        const response = await fetch(process.env.PLAYLIST_URL,
         {
             headers: {
             'Authorization': 'Bearer ' + accessToken,
@@ -70,7 +62,7 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(119821330, track.cover, {
+    robert.sendPhoto(process.env.FAMILY_CHAT_ID, track.cover, {
         caption: message, 
         reply_markup: 
             {
