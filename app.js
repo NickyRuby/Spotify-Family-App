@@ -11,7 +11,7 @@ const url = 'https://api.spotify.com/v1/playlists/49XgBKp8BpRNV9OCfWcg8L/tracks'
 // let accessToken, tokenExpires, tokenExpired = true;
 const clientId = '277eaca42cad4bef8826cf7bac7e9c4d';
 const clientSecret =  '65adb2bc8d794d0e8c58741e5c5b6689';
-let accessToken, tokenExpires, hasTokenExpired = true;
+let accessToken, tokenExpires = Date.now() / 1000;
 
  TOKEN_URI = "https://accounts.spotify.com/api/token";
 
@@ -29,9 +29,8 @@ function auth() {
     };
     console.log('im here');
     rp(opts).then((token) => {
-        tokenExpires = Date.now() + 3200;
+        tokenExpires = Date.now() / 1000 + 3200;
         accessToken = token.access_token;
-        hasTokenExpired = false;
     }); 
 };
 
@@ -89,7 +88,7 @@ function sendTracksToChat(tracks) { // {[]}
 }
 
 
-function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
+function comparePlaylist(receivedState){ 
     
     const results = [];
 
@@ -112,12 +111,9 @@ function comparePlaylist(receivedState){ // [{artist: "", track: "", link: ""}]
 
 function search() {
 
-    const currentTime = Date.now();
+    const currentTime = Date.now() / 1000;
   
-    if (currentTime > tokenExpires || hasTokenExpired) {
-        console.log('im working');
-        auth();
-    }
+    if (currentTime > tokenExpires) auth();
     else {
         getTracks()
         .then(response => {
