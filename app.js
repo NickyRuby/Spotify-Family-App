@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+require('dotenv').config();
 const rp = require('request-promise');
 const fs = require('fs');
 const redis = require('redis');
@@ -67,13 +68,13 @@ function sendTracksToChat(tracks) { // {[]}
         reply_markup: 
             {
                 inline_keyboard: [
-                    [{text: "Cлушать", url: track.link}]]
+                    [{text: "Cлушать", url: track.link]]
             }
         });
 
         client.llen('tracks',(err,rep) => {
             let newId = rep + 1;
-            client.lpush('tracks', `${newId}`,track.link)
+            client.lpush('tracks', {link: track.link, likes: 0});
             });
 
      });
@@ -86,6 +87,7 @@ function comparePlaylist(receivedState){
 
     client.llen('tracks',(err,rep) => {
         client.lrange('tracks',0,rep, (err,tracks) => {
+            console.log(tracks);
             receivedState.forEach(item => {
                 if (!tracks.includes(item.link)) { 
                     results.push(item); 
