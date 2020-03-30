@@ -1,8 +1,8 @@
 const fetch = require('node-fetch');
 const rp = require('request-promise');
-const fs = require('fs');
+require('dotenv').config();
 const redis = require('redis');
-const client = redis.createClient(process.env.REDIS_URL)
+const client = redis.createClient()
 const robert = require('./bot.js');
 const url = process.env.PLAYLIST_URL;
 const clientId = process.env.CLIENT_ID;
@@ -29,7 +29,7 @@ function auth() {
 
 const getTracks = async () => {
     try {
-        const response = await fetch(process.env.PLAYLIST_URL,
+        const response = await fetch('https://api.spotify.com/v1/playlists/38qcwGRdUUNWxBImoXurqU/tracks',
         {
             headers: {
             'Authorization': 'Bearer ' + accessToken,
@@ -62,7 +62,7 @@ function getPlaylistTracks(response) {
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(process.env.FAMILY_CHAT_ID, track.cover, {
+    robert.sendPhoto(119821330, track.cover, {
         caption: message, 
         reply_markup: 
             {
@@ -71,10 +71,7 @@ function sendTracksToChat(tracks) { // {[]}
             }
         });
 
-        client.llen('tracks',(err,rep) => {
-            let newId = rep + 1;
-            client.lpush('tracks', `${newId}`,track.link)
-            });
+            client.lpush('tracks', track.link)
 
      });
 }
