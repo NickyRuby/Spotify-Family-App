@@ -19,7 +19,7 @@ function auth() {
         },
         json: true,
     };
-    console.log('getting auth token's);
+    console.log('getting auth token');
     rp(opts).then((token) => {
         tokenExpires = Date.now() / 1000 + 3200;
         accessToken = token.access_token;
@@ -50,6 +50,8 @@ function getPlaylistTracks(response) {
     response.items.forEach(item => {
             // console.log(item.track.images);
             tracks.push({
+            addedAt: item.added_at,
+            addedBy: item.added_by.id,
             artist: item.track.artists[0].name,
             track: item.track.name,
             link: item.track.external_urls.spotify,
@@ -60,6 +62,7 @@ function getPlaylistTracks(response) {
 }
 
 function sendTracksToChat(tracks) { // {[]}
+    console.log(tracks);
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
     robert.sendPhoto(119821330, track.cover, {
@@ -70,8 +73,14 @@ function sendTracksToChat(tracks) { // {[]}
                     [{text: "Cлушать", url: track.link}]]
             }
         });
-
-            client.lpush('tracks', track.link)
+            // TODO: Move db to HASH type: hmset user:1000 username antirez birthyear 1977 verified 1
+            // client.lpush('tracks', track.link);
+            client.hkeys('tracks', (err,rep)=> {
+                newId = rep + 1;
+                client.hmset('tracks', 'id', newId, 'url', track.link, 'added_at', 
+                track.addedAt, 'added_by', track.addedBy, 'likes', 0);
+            })
+             
 
      });
 }
@@ -81,8 +90,8 @@ function comparePlaylist(receivedState){
     
     const results = [];
 
-    client.llen('tracks',(err,rep) => {
-        client.lrange('tracks',0,rep, (err,tracks) => {
+    client.hgetall('tracks',(err,rep) => {
+        client.lrange('tracks', 0, rep, (err,tracks) => {
             receivedState.forEach(item => {
                 if (!tracks.includes(item.link)) { 
                     results.push(item); 
@@ -117,3 +126,6 @@ function search() {
 }
 
 setInterval(search, 1000);
+client.hgetall('tracks', (err,rep) => {
+    console.log(rep);
+})
