@@ -6,7 +6,7 @@ const client = redis.createClient()
 const robert = require('./bot.js');
 const url = process.env.PLAYLIST_URL;
 const clientId = process.env.CLIENT_ID;
-const clientSecret =  process.env.CLIENT_SECRET;
+const clientSecret = process.env.CLIENT_SECRET;
 let accessToken, tokenExpires = Date.now() / 1000;
 
 function auth() {
@@ -19,7 +19,7 @@ function auth() {
         },
         json: true,
     };
-    console.log('im here');
+    console.log('getting auth token's);
     rp(opts).then((token) => {
         tokenExpires = Date.now() / 1000 + 3200;
         accessToken = token.access_token;
@@ -29,7 +29,7 @@ function auth() {
 
 const getTracks = async () => {
     try {
-        const response = await fetch('https://api.spotify.com/v1/playlists/38qcwGRdUUNWxBImoXurqU/tracks',
+        const response = await fetch('https://api.spotify.com/v1/playlists/01v15y5gpCqnA5ePoAeMRV/tracks',
         {
             headers: {
             'Authorization': 'Bearer ' + accessToken,
