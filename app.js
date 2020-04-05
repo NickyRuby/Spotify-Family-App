@@ -49,7 +49,6 @@ const getTracks = async () => {
 function getPlaylistTracks(response) {
     let tracks =[];
     response.items.forEach(item => {
-            // console.log(item.track.images);
             tracks.push({
             addedAt: item.added_at,
             addedBy: item.added_by.id,
@@ -64,7 +63,6 @@ function getPlaylistTracks(response) {
 }
 
 function sendTracksToChat(tracks) { // {[]}
-    console.log(tracks);
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
     robert.sendPhoto(119821330, track.cover, {
@@ -82,12 +80,10 @@ function sendTracksToChat(tracks) { // {[]}
                 client.hmset(`track:${newId}`, 'id', newId, 'url', track.link, 'added_at', 
                 track.addedAt, 'added_by', track.addedBy, 'likes', 0);
             })
-        
-
      });
 }
 
-
+// TODO: FIX LOGIC
 function comparePlaylist(receivedState){ 
     console.log('comparing...')
     const results = [];
@@ -96,29 +92,29 @@ function comparePlaylist(receivedState){
         if (err) {
             console.log(err);
         }
-        console.log(rep);
         rep.forEach(key => {
             client.hgetall(key,(err,rep)=> {
                 if (err) {
                     console.log(err);
                 }
+                console.log(rep);
+                console.log(rep.url);
                 tracks.push(rep.url);
             });
-        });
+            console.log(tracks);
     });
-    console.log(tracks);  
     receivedState.forEach(item => {
-            if (!tracks.includes(item.link)) { 
-                results.push(item); 
-                console.log(`New track added: ${item.artist} — ${item.track}`);
-            }
-            else return false;
+        if (!tracks.includes(item.link)) { 
+            results.push(item); 
+            console.log(`New track added: ${item.artist} — ${item.track}`);
+        }
+        else return false;
     });
-        
     if (results.length > 0) sendTracksToChat(results);
     else console.log('Nothing new');
+});
 
-}
+};
 
 
 function search() {
@@ -138,4 +134,9 @@ function search() {
 }
 }
 
-setInterval(search, 1000);
+//setInterval(search, 1000);
+client.keys("*",(err,rep) => {
+    rep.forEach(key => client.hgetall(key,(e,r) => {
+        console.log(r);
+    }));
+});
