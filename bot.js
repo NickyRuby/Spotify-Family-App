@@ -22,10 +22,10 @@ if (process.env.NODE_ENV === 'production') {
     robertBot = new TelegramBot(token, { polling: true });
  }
 
-robertBot.on('text',(msg) => {
-    robertBot.sendMessage(msg.chat.id, "Привет");
-    console.log(msg.chat.id);
-});
+// robertBot.on('text',(msg) => {
+//     robertBot.sendMessage(msg.chat.id, "Привет");
+//     console.log(msg.chat.id);
+// });
 
 robertBot.on("polling_error", (err) => console.log(err));
 

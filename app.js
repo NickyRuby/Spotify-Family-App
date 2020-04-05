@@ -37,6 +37,7 @@ const getTracks = async () => {
             
             },
         });
+        console.log('getting tracks...')
         return await response.json();
     }
     catch(err) {
@@ -58,6 +59,7 @@ function getPlaylistTracks(response) {
             cover: item.track.album.images[0].url + `?${item.track.album.images[0].width}x${item.track.album.images[0].width}`,
             });
         });
+    console.log('Got tracks');
     return tracks;
 }
 
@@ -75,35 +77,47 @@ function sendTracksToChat(tracks) { // {[]}
         });
             // TODO: Move db to HASH type: hmset user:1000 username antirez birthyear 1977 verified 1
             // client.lpush('tracks', track.link);
-            client.hkeys('tracks', (err,rep)=> {
-                newId = rep + 1;
-                client.hmset('tracks', 'id', newId, 'url', track.link, 'added_at', 
+            client.keys('track:*', (err,rep)=> {
+                newId = rep.length + 1;
+                client.hmset(`track:${newId}`, 'id', newId, 'url', track.link, 'added_at', 
                 track.addedAt, 'added_by', track.addedBy, 'likes', 0);
             })
-             
+        
 
      });
 }
 
 
 function comparePlaylist(receivedState){ 
-    
+    console.log('comparing...')
     const results = [];
-
-    client.hgetall('tracks',(err,rep) => {
-        client.lrange('tracks', 0, rep, (err,tracks) => {
-            receivedState.forEach(item => {
-                if (!tracks.includes(item.link)) { 
-                    results.push(item); 
-                    console.log(`New track added: ${item.artist} — ${item.track}`);
+    let tracks = [];
+    client.keys('track:*',(err,rep) => {
+        if (err) {
+            console.log(err);
+        }
+        console.log(rep);
+        rep.forEach(key => {
+            client.hgetall(key,(err,rep)=> {
+                if (err) {
+                    console.log(err);
                 }
-                else return false;
-                });
-        
-            if (results.length > 0) sendTracksToChat(results);
-            else console.log('Nothing new');
+                tracks.push(rep.url);
+            });
         });
     });
+    console.log(tracks);  
+    receivedState.forEach(item => {
+            if (!tracks.includes(item.link)) { 
+                results.push(item); 
+                console.log(`New track added: ${item.artist} — ${item.track}`);
+            }
+            else return false;
+    });
+        
+    if (results.length > 0) sendTracksToChat(results);
+    else console.log('Nothing new');
+
 }
 
 
@@ -117,8 +131,7 @@ function search() {
         .then(response => {
         let tracksList = getPlaylistTracks(response);
         comparePlaylist(tracksList); 
-        })
-        .catch(err => {
+        }).catch(err => {
         console.log(err)
     
     });
@@ -126,6 +139,3 @@ function search() {
 }
 
 setInterval(search, 1000);
-client.hgetall('tracks', (err,rep) => {
-    console.log(rep);
-})
