@@ -37,7 +37,6 @@ const getTracks = async () => {
             
             },
         });
-        console.log('getting tracks...')
         return await response.json();
     }
     catch(err) {
@@ -58,8 +57,42 @@ function getPlaylistTracks(response) {
             cover: item.track.album.images[0].url + `?${item.track.album.images[0].width}x${item.track.album.images[0].width}`,
             });
         });
-    console.log('Got tracks');
     return tracks;
+}
+
+
+
+// TODO: FIX LOGIC
+function comparePlaylist(receivedState){ 
+    console.log('comparing...')
+    const results = [];
+    let tracks = [];
+    client.keys('track:*',(err,keys) => {
+        if (keys.length === 0) {
+            receivedState.forEach(item => results.push(item));
+            sendTracksToChat(results);
+            console.log('added for empty');
+        }
+        keys.forEach(key => { 
+            client.hgetall(key,(err,rep)=> {
+                tracks.push(rep.url);
+                if (tracks.length === keys.length) {
+                    receivedState.forEach(item => {
+                        if (!tracks.includes(item.link)) { 
+                            results.push(item); 
+                            console.log(`New track added: ${item.artist} — ${item.track}`);
+                        }
+                        else return false;
+                    });
+                    if (results.length > 0) sendTracksToChat(results);
+                    else console.log('Nothing new');
+                }
+            });
+        });
+        
+    });
+        
+
 }
 
 function sendTracksToChat(tracks) { // {[]}
@@ -73,49 +106,15 @@ function sendTracksToChat(tracks) { // {[]}
                     [{text: "Cлушать", url: track.link}]]
             }
         });
-            // TODO: Move db to HASH type: hmset user:1000 username antirez birthyear 1977 verified 1
-            // client.lpush('tracks', track.link);
-            client.keys('track:*', (err,rep)=> {
-                newId = rep.length + 1;
+            console.log(track.track);
+            client.keys('track:*', (err,keys)=> {
+                console.log(`adding ${track.track} to database'`);;
+                newId = keys.length + 1;
                 client.hmset(`track:${newId}`, 'id', newId, 'url', track.link, 'added_at', 
                 track.addedAt, 'added_by', track.addedBy, 'likes', 0);
-            })
+            });
      });
 }
-
-// TODO: FIX LOGIC
-function comparePlaylist(receivedState){ 
-    console.log('comparing...')
-    const results = [];
-    let tracks = [];
-    client.keys('track:*',(err,rep) => {
-        if (err) {
-            console.log(err);
-        }
-        rep.forEach(key => {
-            client.hgetall(key,(err,rep)=> {
-                if (err) {
-                    console.log(err);
-                }
-                console.log(rep);
-                console.log(rep.url);
-                tracks.push(rep.url);
-            });
-            console.log(tracks);
-    });
-    receivedState.forEach(item => {
-        if (!tracks.includes(item.link)) { 
-            results.push(item); 
-            console.log(`New track added: ${item.artist} — ${item.track}`);
-        }
-        else return false;
-    });
-    if (results.length > 0) sendTracksToChat(results);
-    else console.log('Nothing new');
-});
-
-};
-
 
 function search() {
 
@@ -134,9 +133,13 @@ function search() {
 }
 }
 
-//setInterval(search, 1000);
-client.keys("*",(err,rep) => {
-    rep.forEach(key => client.hgetall(key,(e,r) => {
-        console.log(r);
-    }));
-});
+setInterval(search, 1000);
+// client.keys("*",(err,rep) => {
+//     console.log(rep);
+//     rep.forEach(key => client.hgetall(key,(e,r) => {
+//         console.log(r);
+//     }));
+// });
+
+// client.flushall();
+
