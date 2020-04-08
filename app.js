@@ -8,6 +8,7 @@ const url = process.env.PLAYLIST_URL;
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 let accessToken, tokenExpires = Date.now() / 1000;
+module.exports = client;
 
 function auth() {
     const opts = {
@@ -62,7 +63,6 @@ function getPlaylistTracks(response) {
 
 
 
-// TODO: FIX LOGIC
 function comparePlaylist(receivedState){ 
     console.log('comparing...')
     const results = [];
@@ -91,30 +91,62 @@ function comparePlaylist(receivedState){
         });
         
     });
-        
-
 }
 
-function sendTracksToChat(tracks) { // {[]}
+function sendTracksToChat(tracks) { 
     tracks.forEach(track => {
-    let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(119821330, track.cover, {
-        caption: message, 
-        reply_markup: 
-            {
-                inline_keyboard: [
-                    [{text: "Cлушать", url: track.link}]]
-            }
-        });
-            console.log(track.track);
-            client.keys('track:*', (err,keys)=> {
-                console.log(`adding ${track.track} to database'`);;
-                newId = keys.length + 1;
-                client.hmset(`track:${newId}`, 'id', newId, 'url', track.link, 'added_at', 
-                track.addedAt, 'added_by', track.addedBy, 'likes', 0);
+        let trackIndexInDB;
+        client.keys('track:*', (err,keys)=> {
+            console.log(`adding ${track.track} to database`);;
+            trackIndexInDB = keys.length + 1;
+            client.hmset(`track:${trackIndexInDB}`, 'id', trackIndexInDB, 'url', track.link, 'added_at', 
+            track.addedAt, 'added_by', track.addedBy, 'likes', 0);
+
+            console.log('index is' + trackIndexInDB);
+            let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
+            robert.sendPhoto(119821330, track.cover, {
+                caption: message, 
+                reply_markup: 
+                    {
+                        inline_keyboard: [
+                            [{text: "Cлушать", url: track.link}],
+                            [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
+                        ]
+                    }
+                });
             });
-     });
+        });
+
 }
+
+robertBot.on('callback_query', (callbackData) => {
+    let trackLikesAndUrl;
+    let trackIndex = callbackData.data;
+    console.log(trackIndex);
+    client.hgetall(`track:${trackIndex}`,(err,rep) => {
+       if (err) {
+           console.log(err);
+       }
+       console.log('heres object data');
+       console.log(rep);
+       trackLikesAndUrl = { url: rep.url, likes: Number(rep.likes) + 1}
+
+        let newMarkup = {
+            inline_keyboard: [
+            [{text: "Cлушать", url: '1'}],
+            [{text: `🖤 ${trackLikesAndUrl.likes}`, callback_data: `${trackIndex}`}]
+        ]
+        };
+    
+        let form = {
+            chat_id: callbackData.message.chat.id,
+            message_id: callbackData.message.message_id,
+        }
+    
+        robertBot.editMessageReplyMarkup(newMarkup, form);
+        client.hmset(`track:${trackIndex}`, 'likes', trackLikesAndUrl.likes);
+    });
+ });
 
 function search() {
 
