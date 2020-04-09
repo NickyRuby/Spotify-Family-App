@@ -119,10 +119,14 @@ function sendTracksToChat(tracks) {
 
 }
 
+
 robertBot.on('callback_query', (callbackData) => {
-    console.log(callbackData);
-    let trackLikesAndUrl,form,newMarkup;
+
     let trackIndex = callbackData.data;
+
+    let answers = ['😌Дякую','🖤Спасибочки','👌Принято','💪Ух!','🚀Погнаали!','✨Заряд', '🔥Давай еще', '🥳Еее'];
+    robertBot.answerCallbackQuery(callbackData.id,{ text: answers[Math.floor(Math.random() * Math.floor(9))]});
+    
     console.log(trackIndex);
     client.hgetall(`track:${trackIndex}`,(err,rep) => {
        if (err) {
@@ -143,6 +147,7 @@ robertBot.on('callback_query', (callbackData) => {
             chat_id: callbackData.message.chat.id,
             message_id: callbackData.message.message_id,
         }
+
         robertBot.editMessageReplyMarkup(newMarkup, form);
         client.hmset(`track:${trackIndex}`, 'likes', trackLikesAndUrl.likes); 
     });
