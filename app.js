@@ -1,14 +1,15 @@
 const fetch = require('node-fetch');
 require('dotenv').config();
 const rp = require('request-promise');
-const fs = require('fs');
+require('dotenv').config();
 const redis = require('redis');
-const client = redis.createClient(process.env.REDIS_URL)
+const client = redis.createClient()
 const robert = require('./bot.js');
 const url = process.env.PLAYLIST_URL;
 const clientId = process.env.CLIENT_ID;
-const clientSecret =  process.env.CLIENT_SECRET;
+const clientSecret = process.env.CLIENT_SECRET;
 let accessToken, tokenExpires = Date.now() / 1000;
+module.exports = client;
 
 function auth() {
     const opts = {
@@ -20,7 +21,7 @@ function auth() {
         },
         json: true,
     };
-    console.log('im here');
+    console.log('getting auth token');
     rp(opts).then((token) => {
         tokenExpires = Date.now() / 1000 + 3200;
         accessToken = token.access_token;
@@ -30,7 +31,7 @@ function auth() {
 
 const getTracks = async () => {
     try {
-        const response = await fetch(process.env.PLAYLIST_URL,
+        const response = await fetch('https://api.spotify.com/v1/playlists/01v15y5gpCqnA5ePoAeMRV/tracks',
         {
             headers: {
             'Authorization': 'Bearer ' + accessToken,
@@ -49,8 +50,9 @@ const getTracks = async () => {
 function getPlaylistTracks(response) {
     let tracks =[];
     response.items.forEach(item => {
-            // console.log(item.track.images);
             tracks.push({
+            addedAt: item.added_at,
+            addedBy: item.added_by.id,
             artist: item.track.artists[0].name,
             track: item.track.name,
             link: item.track.external_urls.spotify,
@@ -60,6 +62,7 @@ function getPlaylistTracks(response) {
     return tracks;
 }
 
+<<<<<<< HEAD
 function sendTracksToChat(tracks) { // {[]}
     tracks.forEach(track => {
     let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
@@ -70,21 +73,90 @@ function sendTracksToChat(tracks) { // {[]}
                 inline_keyboard: [
                     [{text: "Cлушать", url: track.link]]
             }
-        });
-
-        client.llen('tracks',(err,rep) => {
-            let newId = rep + 1;
-            client.lpush('tracks', {link: track.link, likes: 0});
-            });
-
-     });
-}
+=======
 
 
 function comparePlaylist(receivedState){ 
-    
+    console.log('comparing...')
     const results = [];
+    let tracks = [];
+    client.keys('track:*',(err,keys) => {
+        if (keys.length === 0) {
+            receivedState.forEach(item => results.push(item));
+            sendTracksToChat(results);
+            console.log('added for empty');
+        }
+        keys.forEach(key => { 
+            client.hgetall(key,(err,rep)=> {
+                tracks.push(rep.url);
+                if (tracks.length === keys.length) {
+                    receivedState.forEach(item => {
+                        if (!tracks.includes(item.link)) { 
+                            results.push(item); 
+                            console.log(`New track added: ${item.artist} — ${item.track}`);
+                        }
+                        else return false;
+                    });
+                    if (results.length > 0) sendTracksToChat(results);
+                    else console.log('Nothing new');
+                }
+            });
+>>>>>>> test_likes
+        });
+        
+    });
+}
 
+<<<<<<< HEAD
+        client.llen('tracks',(err,rep) => {
+            let newId = rep + 1;
+            client.lpush('tracks', {link: track.link, likes: 0});
+=======
+function sendTracksToChat(tracks) { 
+    tracks.forEach(track => {
+        let trackIndexInDB;
+        client.keys('track:*', (err,keys)=> {
+            console.log(`adding ${track.track} to database`);;
+            trackIndexInDB = keys.length + 1;
+            client.hmset(`track:${trackIndexInDB}`, 'id', trackIndexInDB, 'url', track.link, 'added_at', 
+            track.addedAt, 'added_by', track.addedBy, 'likes', 0);
+
+            console.log('index is' + trackIndexInDB);
+            let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
+            robert.sendPhoto(119821330, track.cover, {
+                caption: message, 
+                reply_markup: 
+                    {
+                        inline_keyboard: [
+                            [{text: "Cлушать", url: track.link}],
+                            [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
+                        ]
+                    }
+                });
+>>>>>>> test_likes
+            });
+        });
+
+}
+
+
+robertBot.on('callback_query', (callbackData) => {
+
+    let trackIndex = callbackData.data;
+
+    let answers = ['😌Дякую','🖤Спасибочки','👌Принято','💪Ух!','🚀Погнаали!','✨Заряд', '🔥Давай еще', '🥳Еее'];
+    robertBot.answerCallbackQuery(callbackData.id,{ text: answers[Math.floor(Math.random() * Math.floor(9))]});
+    
+    console.log(trackIndex);
+    client.hgetall(`track:${trackIndex}`,(err,rep) => {
+       if (err) {
+           console.log(err);
+       }
+       console.log('heres object data');
+       console.log(rep);
+       trackLikesAndUrl = { url: rep.url, likes: Number(rep.likes) + 1}
+
+<<<<<<< HEAD
     client.llen('tracks',(err,rep) => {
         client.lrange('tracks',0,rep, (err,tracks) => {
             console.log(tracks);
@@ -99,9 +171,25 @@ function comparePlaylist(receivedState){
             if (results.length > 0) sendTracksToChat(results);
             else console.log('Nothing new');
         });
-    });
-}
+=======
+        newMarkup = {
+            inline_keyboard: [
+            [{text: "Cлушать", url: `${trackLikesAndUrl.url}`}],
+            [{text: `🖤 ${trackLikesAndUrl.likes}`, callback_data: `${trackIndex}`}]
+        ]
+        };
+    
+        form = {
+            chat_id: callbackData.message.chat.id,
+            message_id: callbackData.message.message_id,
+        }
 
+        robertBot.editMessageReplyMarkup(newMarkup, form);
+        client.hmset(`track:${trackIndex}`, 'likes', trackLikesAndUrl.likes); 
+>>>>>>> test_likes
+    });
+
+ });
 
 function search() {
 
@@ -113,8 +201,7 @@ function search() {
         .then(response => {
         let tracksList = getPlaylistTracks(response);
         comparePlaylist(tracksList); 
-        })
-        .catch(err => {
+        }).catch(err => {
         console.log(err)
     
     });
@@ -122,3 +209,12 @@ function search() {
 }
 
 setInterval(search, 1000);
+// client.keys("*",(err,rep) => {
+//     console.log(rep);
+//     rep.forEach(key => client.hgetall(key,(e,r) => {
+//         console.log(r);
+//     }));
+// });
+
+// client.flushall();
+
