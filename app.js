@@ -120,7 +120,8 @@ function sendTracksToChat(tracks) {
 }
 
 robertBot.on('callback_query', (callbackData) => {
-    let trackLikesAndUrl;
+    console.log(callbackData);
+    let trackLikesAndUrl,form,newMarkup;
     let trackIndex = callbackData.data;
     console.log(trackIndex);
     client.hgetall(`track:${trackIndex}`,(err,rep) => {
@@ -131,21 +132,21 @@ robertBot.on('callback_query', (callbackData) => {
        console.log(rep);
        trackLikesAndUrl = { url: rep.url, likes: Number(rep.likes) + 1}
 
-        let newMarkup = {
+        newMarkup = {
             inline_keyboard: [
-            [{text: "Cлушать", url: '1'}],
+            [{text: "Cлушать", url: `${trackLikesAndUrl.url}`}],
             [{text: `🖤 ${trackLikesAndUrl.likes}`, callback_data: `${trackIndex}`}]
         ]
         };
     
-        let form = {
+        form = {
             chat_id: callbackData.message.chat.id,
             message_id: callbackData.message.message_id,
         }
-    
         robertBot.editMessageReplyMarkup(newMarkup, form);
-        client.hmset(`track:${trackIndex}`, 'likes', trackLikesAndUrl.likes);
+        client.hmset(`track:${trackIndex}`, 'likes', trackLikesAndUrl.likes); 
     });
+
  });
 
 function search() {
