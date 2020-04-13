@@ -30,25 +30,41 @@ function auth() {
 
 
 const getTracks = async () => {
-    try {
-        const response = await fetch('https://api.spotify.com/v1/playlists/01v15y5gpCqnA5ePoAeMRV/tracks',
-        {
-            headers: {
-            'Authorization': 'Bearer ' + accessToken,
-            'Content-Type': 'application/json'
-            
-            },
-        });
-        return await response.json();
+    let allTracks = {items: [] };
+    const request = async(url, params) => {
+            try{
+            const response = await fetch(url,
+            {
+                headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'Content-Type': 'application/json'  
+                },
+                body : params
+            });
+            let requestedData = await response.json();
+            requestedData.items.forEach(item => allTracks.items.push(item));
+            if (requestedData.next !== null) {
+                console.log(requestedData.next);
+                request(process.env.PLAYLIST_URL, {
+                    ofset: requestedData.ofset,
+                    limit: requestedData.limit
+                });
+            } else {
+                console.log(allTracks);
+                return allTracks;
+            }
+        } catch (err) {
+            console.log(err);
+        }
     }
-    catch(err) {
-        console.log(err);
-    }
+    request(process.env.PLAYLIST_URL, {});
 }
+    
 
 // response -> [{artist, track, link}]
 function getPlaylistTracks(response) {
     let tracks =[];
+    // console.log(response.items.length);
     response.items.forEach(item => {
             tracks.push({
             addedAt: item.added_at,
@@ -62,18 +78,6 @@ function getPlaylistTracks(response) {
     return tracks;
 }
 
-<<<<<<< HEAD
-function sendTracksToChat(tracks) { // {[]}
-    tracks.forEach(track => {
-    let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-    robert.sendPhoto(process.env.FAMILY_CHAT_ID, track.cover, {
-        caption: message, 
-        reply_markup: 
-            {
-                inline_keyboard: [
-                    [{text: "Cлушать", url: track.link]]
-            }
-=======
 
 
 function comparePlaylist(receivedState){ 
@@ -101,17 +105,11 @@ function comparePlaylist(receivedState){
                     else console.log('Nothing new');
                 }
             });
->>>>>>> test_likes
         });
         
     });
 }
 
-<<<<<<< HEAD
-        client.llen('tracks',(err,rep) => {
-            let newId = rep + 1;
-            client.lpush('tracks', {link: track.link, likes: 0});
-=======
 function sendTracksToChat(tracks) { 
     tracks.forEach(track => {
         let trackIndexInDB;
@@ -123,24 +121,23 @@ function sendTracksToChat(tracks) {
 
             console.log('index is' + trackIndexInDB);
             let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-            robert.sendPhoto(119821330, track.cover, {
-                caption: message, 
-                reply_markup: 
-                    {
-                        inline_keyboard: [
-                            [{text: "Cлушать", url: track.link}],
-                            [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
-                        ]
-                    }
-                });
->>>>>>> test_likes
+            // robert.sendPhoto(119821330, track.cover, {
+            //     caption: message, 
+            //     reply_markup: 
+            //         {
+            //             inline_keyboard: [
+            //                 [{text: "Cлушать", url: track.link}],
+            //                 [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
+            //             ]
+            //         }
+            //     });
             });
         });
 
 }
 
 
-robertBot.on('callback_query', (callbackData) => {
+robert.on('callback_query', (callbackData) => {
 
     let trackIndex = callbackData.data;
 
@@ -156,22 +153,6 @@ robertBot.on('callback_query', (callbackData) => {
        console.log(rep);
        trackLikesAndUrl = { url: rep.url, likes: Number(rep.likes) + 1}
 
-<<<<<<< HEAD
-    client.llen('tracks',(err,rep) => {
-        client.lrange('tracks',0,rep, (err,tracks) => {
-            console.log(tracks);
-            receivedState.forEach(item => {
-                if (!tracks.includes(item.link)) { 
-                    results.push(item); 
-                    console.log(`New track added: ${item.artist} — ${item.track}`);
-                }
-                else return false;
-                });
-        
-            if (results.length > 0) sendTracksToChat(results);
-            else console.log('Nothing new');
-        });
-=======
         newMarkup = {
             inline_keyboard: [
             [{text: "Cлушать", url: `${trackLikesAndUrl.url}`}],
@@ -184,9 +165,8 @@ robertBot.on('callback_query', (callbackData) => {
             message_id: callbackData.message.message_id,
         }
 
-        robertBot.editMessageReplyMarkup(newMarkup, form);
+        robert.editMessageReplyMarkup(newMarkup, form);
         client.hmset(`track:${trackIndex}`, 'likes', trackLikesAndUrl.likes); 
->>>>>>> test_likes
     });
 
  });
@@ -208,13 +188,13 @@ function search() {
 }
 }
 
+// search();
 setInterval(search, 1000);
 // client.keys("*",(err,rep) => {
-//     console.log(rep);
-//     rep.forEach(key => client.hgetall(key,(e,r) => {
-//         console.log(r);
-//     }));
+//     console.log(rep.length);
+//     // rep.forEach(key => client.hgetall(key,(e,r) => {
+//     //     console.log(r.name);
+//     // }));
 // });
 
 // client.flushall();
-
