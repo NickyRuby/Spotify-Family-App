@@ -9,7 +9,6 @@ const robert = require('./bot.js');
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 let accessToken, tokenExpires = Date.now() / 1000;
-module.exports = client;
 
 function auth() {
     const opts = {
