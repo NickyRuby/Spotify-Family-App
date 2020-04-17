@@ -133,8 +133,8 @@ function sendTracksToChat(tracks) {
         //                 ]
         //             }
         //         });
-        //     });
-        // });
+            });
+        });
 
 }
 
