@@ -123,16 +123,16 @@ function sendTracksToChat(tracks) {
 
             console.log('index is' + trackIndexInDB);
             let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-        //     robert.sendPhoto(process.env.FAMILY_CHAT_ID, track.cover, {
-        //         caption: message, 
-        //         reply_markup: 
-        //             {
-        //                 inline_keyboard: [
-        //                     [{text: "Cлушать", url: track.link}],
-        //                     [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
-        //                 ]
-        //             }
-        //         });
+            robert.sendPhoto(process.env.FAMILY_CHAT_ID, track.cover, {
+                caption: message, 
+                reply_markup: 
+                    {
+                        inline_keyboard: [
+                            [{text: "Cлушать", url: track.link}],
+                            [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
+                        ]
+                    }
+                });
             });
         });
 
