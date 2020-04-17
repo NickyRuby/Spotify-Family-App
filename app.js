@@ -3,6 +3,7 @@ require('dotenv').config();
 const rp = require('request-promise');
 require('dotenv').config();
 const redis = require('redis');
+const stringify = require('node-stringify');
 const client = redis.createClient()
 const robert = require('./bot.js');
 const url = process.env.PLAYLIST_URL;
@@ -31,38 +32,40 @@ function auth() {
 
 const getTracks = async () => {
     let allTracks = {items: [] };
-    const request = async(url, params) => {
-            try{
-            const response = await fetch(url,
-            {
-                headers: {
-                'Authorization': 'Bearer ' + accessToken,
-                'Content-Type': 'application/json'  
-                },
-                body : params
+    // console.log('im here');
+    const requestBody = {
+        headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'  
+        }
+    }
+    const request = async (url) => {
+            try {
+            fetch(url,requestBody).then(response => {
+                // console.log('this is response');
+                response.json().then(requestedData => { 
+                    requestedData.items.forEach(item => allTracks.items.push(item));
+                        if (requestedData.next !== null) {
+                            request(requestedData.next,requestBody);
+                            } else {
+                                getPlaylistTracks(allTracks);
+                            }
+                    });
+                
             });
-            let requestedData = await response.json();
-            requestedData.items.forEach(item => allTracks.items.push(item));
-            if (requestedData.next !== null) {
-                console.log(requestedData.next);
-                request(process.env.PLAYLIST_URL, {
-                    ofset: requestedData.ofset,
-                    limit: requestedData.limit
-                });
-            } else {
-                console.log(allTracks);
-                return allTracks;
-            }
+            
         } catch (err) {
             console.log(err);
         }
     }
-    request(process.env.PLAYLIST_URL, {});
+
+    request(process.env.PLAYLIST_URL);
 }
-    
+
 
 // response -> [{artist, track, link}]
 function getPlaylistTracks(response) {
+    // console.log(response);
     let tracks =[];
     // console.log(response.items.length);
     response.items.forEach(item => {
@@ -72,16 +75,16 @@ function getPlaylistTracks(response) {
             artist: item.track.artists[0].name,
             track: item.track.name,
             link: item.track.external_urls.spotify,
-            cover: item.track.album.images[0].url + `?${item.track.album.images[0].width}x${item.track.album.images[0].width}`,
+            cover: item.track.album.images[0].url + 
+            `?${item.track.album.images[0].width}x${item.track.album.images[0].width}`,
             });
         });
-    return tracks;
+    comparePlaylist(tracks);
 }
 
 
 
 function comparePlaylist(receivedState){ 
-    console.log('comparing...')
     const results = [];
     let tracks = [];
     client.keys('track:*',(err,keys) => {
@@ -121,16 +124,16 @@ function sendTracksToChat(tracks) {
 
             console.log('index is' + trackIndexInDB);
             let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-            // robert.sendPhoto(119821330, track.cover, {
-            //     caption: message, 
-            //     reply_markup: 
-            //         {
-            //             inline_keyboard: [
-            //                 [{text: "Cлушать", url: track.link}],
-            //                 [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
-            //             ]
-            //         }
-            //     });
+            robert.sendPhoto(119821330, track.cover, {
+                caption: message, 
+                reply_markup: 
+                    {
+                        inline_keyboard: [
+                            [{text: "Cлушать", url: track.link}],
+                            [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
+                        ]
+                    }
+                });
             });
         });
 
@@ -178,14 +181,14 @@ function search() {
     if (currentTime > tokenExpires) auth();
     else {
         getTracks()
-        .then(response => {
-        let tracksList = getPlaylistTracks(response);
-        comparePlaylist(tracksList); 
-        }).catch(err => {
-        console.log(err)
+        // .then(response => {
+        // let tracksList = getPlaylistTracks(response);
+        // comparePlaylist(tracksList); 
+        // }).catch(err => {
+        // console.log(err)
     
-    });
-}
+    // });
+    }
 }
 
 // search();
