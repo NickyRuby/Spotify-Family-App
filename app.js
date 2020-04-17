@@ -4,9 +4,8 @@ const rp = require('request-promise');
 require('dotenv').config();
 const redis = require('redis');
 const stringify = require('node-stringify');
-const client = redis.createClient()
+const client = redis.createClient(HEROKU_REDIS_RED_URL)
 const robert = require('./bot.js');
-const url = process.env.PLAYLIST_URL;
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 let accessToken, tokenExpires = Date.now() / 1000;
@@ -32,7 +31,7 @@ function auth() {
 
 const getTracks = async () => {
     let allTracks = {items: [] };
-    // console.log('im here');
+    // console.log('im here');g
     const requestBody = {
         headers: {
         'Authorization': 'Bearer ' + accessToken,
@@ -124,18 +123,18 @@ function sendTracksToChat(tracks) {
 
             console.log('index is' + trackIndexInDB);
             let message =  "🎶 " +  track.artist + " — " + track.track + "\n";
-            robert.sendPhoto(119821330, track.cover, {
-                caption: message, 
-                reply_markup: 
-                    {
-                        inline_keyboard: [
-                            [{text: "Cлушать", url: track.link}],
-                            [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
-                        ]
-                    }
-                });
-            });
-        });
+        //     robert.sendPhoto(process.env.FAMILY_CHAT_ID, track.cover, {
+        //         caption: message, 
+        //         reply_markup: 
+        //             {
+        //                 inline_keyboard: [
+        //                     [{text: "Cлушать", url: track.link}],
+        //                     [{text: `🖤 0`, callback_data: `${trackIndexInDB}`}]
+        //                 ]
+        //             }
+        //         });
+        //     });
+        // });
 
 }
 
