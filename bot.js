@@ -17,12 +17,12 @@ app.post('/' + token, (req, res) => {
 });
 
 
-if (process.env.NODE_ENV === 'production') {
-    robertBot = new TelegramBot(token);
-    robertBot.setWebHook(process.env.HEROKU_URL + token);
- } else {
+// if (process.env.NODE_ENV === 'production') {
+//     robertBot = new TelegramBot(token);
+//     robertBot.setWebHook(process.henv.HEROKU_URL + token);
+//  } else {
     robertBot = new TelegramBot(token, { polling: true });
- }
+//  }
 
 // robertBot.on('text',(msg) => {
 //     robertBot.sendMessage(msg.chat.id, "Привет");
